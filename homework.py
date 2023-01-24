@@ -129,7 +129,7 @@ class Swimming(Training):
                 * self.duration)
 
 
-TRAINING_TYPES: dict[str, object] = {
+TRAINING_TYPES = {
     'SWM': Swimming,
     'RUN': Running,
     'WLK': SportsWalking
