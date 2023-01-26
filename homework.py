@@ -11,14 +11,14 @@ class InfoMessage:
     distance: float
     speed: float
     calories: float
-    message = ('Тип тренировки: {}; '
-               'Длительность: {:.3f} ч.; '
-               'Дистанция: {:.3f} км; '
-               'Ср. скорость: {:.3f} км/ч; '
-               'Потрачено ккал: {:.3f}.')
+    message = ('Тип тренировки: {training_type}; '
+               'Длительность: {duration:.3f} ч.; '
+               'Дистанция: {distance:.3f} км; '
+               'Ср. скорость: {speed:.3f} км/ч; '
+               'Потрачено ккал: {calories:.3f}.')
 
     def get_message(self) -> str:
-        return self.message.format(*asdict(self).values())
+        return self.message.format(**asdict(self))
 
 
 class Training:
@@ -39,7 +39,7 @@ class Training:
 
     def get_distance(self) -> float:
         """Получить дистанцию в км."""
-        return (self.action * self.LEN_STEP / self.M_IN_KM)
+        return self.action * self.LEN_STEP / self.M_IN_KM
 
     def get_mean_speed(self) -> float:
         """Получить среднюю скорость движения."""
@@ -78,10 +78,13 @@ class SportsWalking(Training):
     COLORIES_MEAN_HEIGHT_MULTIPLIER: float = 0.029
     SM_IN_M: float = 100
     SPEED_EXTENT: float = 2
-    KM_HOUR_IN_M_MIN: float = 0.278
-    # Сделал константу без расчетов, т.к. если сделать
-    # так: KM_HOUR_IN_M_MIN: float = round (M_IN_KM / 60 / 60)
-    # выдает ошибку
+    '''#Я надеюсь такое подход к реализаци константы принимается.
+    Один момент меня смучает - это как вызывать
+    константы из родительского класса.
+    Если "мой" метод не ОК, подскажите где можно посмотреть.
+    '''
+    KM_HOUR_IN_M_MIN: float = round(Training.M_IN_KM / Training.MIN_IN_HOUR
+                                    / Training.MIN_IN_HOUR, 3)
 
     def __init__(self,
                  action: int,
@@ -95,10 +98,10 @@ class SportsWalking(Training):
     def get_spent_calories(self) -> float:
 
         return ((self.COLORIES_MEAN_WEIGHT_MULTIPLIER * self.weigh
-                + ((self.get_mean_speed() * self.KM_HOUR_IN_M_MIN)
-                    ** self.SPEED_EXTENT / (self.height / self.SM_IN_M))
+                + (self.get_mean_speed() * self.KM_HOUR_IN_M_MIN)
+                ** self.SPEED_EXTENT / (self.height / self.SM_IN_M)
                 * self.COLORIES_MEAN_HEIGHT_MULTIPLIER * self.weigh)
-                * (self.duration * self.MIN_IN_HOUR))
+                * self.duration * self.MIN_IN_HOUR)
 
 
 class Swimming(Training):
@@ -138,10 +141,11 @@ TRAINING_TYPES = {
 
 def read_package(workout_type: str, data: list) -> Training:
     """Прочитать данные полученные от датчиков."""
-    if workout_type in TRAINING_TYPES:
-        return TRAINING_TYPES[workout_type](*data)
-    else:
-        print('Неизвестный тип тренировки')
+    if workout_type not in TRAINING_TYPES:
+        raise ValueError(
+            f'Неизвестный тип тренировки. Тренировки {workout_type}'
+            'не существует')
+    return TRAINING_TYPES[workout_type](*data)
 
 
 def main(training: Training) -> None:
